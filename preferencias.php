@@ -848,7 +848,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
          *
          * Su estructura es:
          *
-         * mb_substr(
+         * substr(
          *     cadena,
          *     posicionInicial,
          *     longitud
@@ -885,7 +885,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
          * substr() trabaja con posiciones
          * expresadas en bytes.
          *
-         * mb_substr() puede trabajar
+         * substr() puede trabajar
          * correctamente con caracteres UTF-8.
          *
          * Esto es importante con nombres
@@ -895,7 +895,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
          *
          * IMPORTANTE:
          *
-         * mb_substr() requiere que esté
+         * substr() requiere que esté
          * habilitada la extensión mbstring
          * en la instalación de PHP.
          *
@@ -1184,7 +1184,7 @@ $visitante = $_COOKIE['visitante'] ?? '';
  *
  * devuelve true si es de tipo string.
  *
- * Si es una cadena, aplicamos mb_substr()
+ * Si es una cadena, aplicamos substr()
  * para limitarla a 40 caracteres.
  *
  * Si no es una cadena,
@@ -1200,7 +1200,7 @@ $visitante = $_COOKIE['visitante'] ?? '';
  * que siga teniendo ese contenido.
  *
  * Esta comprobación también evita intentar
- * aplicar mb_substr() sobre un array.
+ * aplicar substr() sobre un array.
  *
  * Posteriormente utilizaremos e()
  * para escapar el texto al insertarlo
