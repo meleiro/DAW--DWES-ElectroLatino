@@ -3,9 +3,8 @@
 require_once __DIR__ . '/includes/config.php';
 
 
-//id xyz453
-// 1, 2
-if (($_SERVER['REQUEST_METHOD'] ?? '' === 'POST' )){
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
     exigirPostValido();
 
@@ -27,7 +26,40 @@ cabecera('Inspección de sesión');
   <p> <strong>Id de sesión: </strong> 
      <code class="romper"><?= e(session_id()) ?>  </code>  
   </p>
+ <p>
+        <strong>
+            Contenido del carrito en <code>$_SESSION</code>:
+        </strong>
+    </p>
 
+    <pre><?= e(print_r($_SESSION['carrito'], true)) ?></pre>
+
+    <p>
+        <strong>Unidades:</strong>
+        <?= unidadesCarrito() ?>
+    </p>
+
+    <form method="post">
+        <?= campoCsrf() ?>
+
+        <button type="submit">
+            Regenerar identificador de sesión
+        </button>
+    </form>
+
+    <p class="nota">
+        Prueba a abrir una ventana privada
+        y compara los identificadores.
+        No compartas ni publiques el ID de sesión.
+    </p>
+
+    <form action="cerrar.php" method="post" class="separado">
+        <?= campoCsrf() ?>
+
+        <button type="submit" class="peligro">
+            Cerrar sesión y borrar carrito
+        </button>
+    </form>
     
 </div>
 <?php pie(); ?>
