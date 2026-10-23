@@ -14,7 +14,7 @@ function euros(float $cantidad): string {
 
 // Esta función se completará al aprender a guardar el carrito en una sesión.
 function unidadesCarrito(): int {
-    return 0;
+      return array_sum($_SESSION['carrito']);
 }
 
 // Esta función se completará cuando el carrito ya exista.
