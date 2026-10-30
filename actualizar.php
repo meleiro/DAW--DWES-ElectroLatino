@@ -18,6 +18,8 @@ $cantidad = filter_input(
     FILTER_VALIDATE_INT
 );
 
+
+
 if ($id === false  || $id ===null || !isset($productos[$id])
  || $cantidad === false  || $cantidad ===null || $cantidad < 0 ) {
 
@@ -32,3 +34,6 @@ if ($id === false  || $id ===null || !isset($productos[$id])
   }
   
   volver('carrito.php');
+
+
+  

@@ -3,6 +3,42 @@
 
 require_once __DIR__ . '/includes/config.php';
 
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST'){
+
+        exigirPostValido();
+
+        $accion = $_POST['accion'] ?? 'guardar';
+
+        $opciones = [
+            'expires' => time() + 30 * 24 * 60 * 60,
+            'path' => '/',
+            'secure' => $https,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+
+        if ($accion === 'borrar'){
+            $opciones['expires'] = time() - 3600;
+            setcookie('tema', '', $opciones);
+            setcookie('visitante', '', $opciones);
+        } else {
+            $tema = $_POST['tema'] ?? 'claro';
+            $tema = is_string($tema) &&
+                    in_array($tema, ['claro', 'oscuro'], true)
+                    ? $tema : 'claro';
+
+
+        }
+
+
+
+}
+
+
+
+
+
+
 cabecera('Preferencias');
 
 $visitante = '';
