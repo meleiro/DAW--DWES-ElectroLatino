@@ -3,7 +3,20 @@
 require_once __DIR__ . '/includes/config.php';
 exigirPostValido();
 
-cabecera('Funcionalidad pendiente');
-?>
-<div class="panel"><h1>Eliminar producto</h1><p>Esta operación se completará en la segunda clase.</p><a href="carrito.php">Volver</a></div>
-<?php pie(); ?>
+cabecera('Eliminar Producto');
+
+$id = filter_input(
+    INPUT_POST,
+    'producto_id',
+    FILTER_VALIDATE_INT
+);
+
+if ( $id === false || $id === null){
+    http_response_code(400);
+    exit('Identificador no válido');
+}
+
+unset($_SESSION['carrito'][$id]);
+
+volver('carrito.php');
+
