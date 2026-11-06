@@ -595,9 +595,366 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         array    -> "claro"
         */
 
-        $tema = is_string($tema) &&
-                in_array($tema, ['claro', 'oscuro'], true)
-                ? $tema : 'claro';
+/*
+============================================================
+1. VALIDAR EL TEMA SELECCIONADO POR EL USUARIO
+============================================================
+
+La variable $tema contiene el valor que hemos recuperado
+previamente del formulario mediante $_POST.
+
+Queremos asegurarnos de que solamente pueda contener
+uno de estos dos valores:
+
+- 'claro'
+- 'oscuro'
+
+Para ello utilizamos dos funciones y un operador ternario.
+*/
+
+// is_string($tema):
+// Comprueba que el valor recibido sea una cadena de texto.
+//
+// Devuelve:
+// true  -> si es una cadena.
+// false -> si es otro tipo de dato, por ejemplo, un array.
+//
+// in_array($tema, ['claro', 'oscuro'], true):
+// Comprueba si el valor de $tema se encuentra dentro
+// del array de valores permitidos.
+//
+// El tercer argumento, true, obliga a realizar
+// una comparación estricta, teniendo en cuenta
+// tanto el valor como su tipo.
+//
+// El operador && significa AND lógico:
+// ambas condiciones deben cumplirse.
+//
+// El operador ternario tiene esta estructura:
+//
+// condicion ? valor_si_verdadero : valor_si_falso
+//
+// Si el tema es válido, conservamos su valor.
+// Si no lo es, utilizamos 'claro' como valor por defecto.
+
+$tema = is_string($tema) &&
+        in_array($tema, ['claro', 'oscuro'], true)
+        ? $tema : 'claro';
+
+
+/*
+============================================================
+2. GUARDAR LA COOKIE DEL TEMA
+============================================================
+
+setcookie() envía una cabecera HTTP al navegador
+para solicitar que almacene una cookie.
+
+Recibe tres argumentos:
+
+1. 'tema':
+   Nombre de la cookie.
+
+2. $tema:
+   Valor que queremos almacenar ('claro' u 'oscuro').
+
+3. $opciones:
+   Array asociativo que hemos definido previamente
+   con las opciones de configuración.
+
+   Por ejemplo:
+   - expires: fecha de caducidad.
+   - path: ruta donde se enviará la cookie.
+   - secure: restricción a conexiones seguras.
+   - httponly: impide leerla desde document.cookie.
+   - samesite: controla determinados envíos entre sitios.
+
+IMPORTANTE:
+
+setcookie() no modifica inmediatamente $_COOKIE.
+
+El nuevo valor estará disponible en una petición posterior,
+cuando el navegador envíe la cookie al servidor.
+*/
+
+setcookie('tema', $tema, $opciones);
+
+
+/*
+============================================================
+3. RECUPERAR EL NOMBRE DEL VISITANTE
+============================================================
+
+$_POST es un array superglobal que contiene los datos
+enviados mediante un formulario con método POST.
+
+El campo HTML correspondiente es:
+
+<input name="visitante" ...>
+
+Por tanto, recuperamos su valor mediante:
+
+$_POST['visitante']
+
+El operador ?? significa:
+
+"Si el valor existe y no es null, utilízalo.
+En caso contrario, utiliza el valor alternativo".
+
+Si no recibimos el nombre, utilizamos una cadena vacía.
+*/
+
+$nombre = $_POST['visitante'] ?? '';
+
+
+/*
+============================================================
+4. COMPROBAR QUE EL NOMBRE SEA TEXTO
+============================================================
+
+Aunque el formulario contiene un campo de texto,
+no debemos confiar completamente en los datos recibidos.
+
+Un usuario podría manipular la petición y enviar
+un array en lugar de una cadena.
+
+Por ejemplo:
+
+visitante[]=Ana
+
+En ese caso, $_POST['visitante'] podría ser un array.
+
+Utilizamos is_string() para comprobar el tipo.
+
+Si es una cadena:
+    Aplicamos trim($nombre).
+
+Si no es una cadena:
+    Asignamos una cadena vacía.
+
+trim() elimina los espacios en blanco y otros caracteres
+de separación habituales al principio y al final.
+
+Ejemplo:
+
+"   Ana López   " -> "Ana López"
+*/
+
+$nombre = is_string($nombre) ? trim($nombre) : '';
+
+
+/*
+============================================================
+5. ELIMINAR CARACTERES DE CONTROL
+============================================================
+
+preg_replace() permite buscar y sustituir partes
+de una cadena utilizando expresiones regulares.
+
+Su estructura es:
+
+preg_replace(patron, sustitucion, texto);
+
+En nuestro caso:
+
+PATRÓN:
+'/[\x00-\x1F\x7F]/u'
+
+SUSTITUCIÓN:
+''
+
+TEXTO:
+$nombre
+
+Vamos a analizar la expresión regular:
+
+[ ... ]
+Define una clase de caracteres: cualquiera de los
+caracteres incluidos en ella.
+
+\x00-\x1F
+Representa los caracteres cuyos códigos hexadecimales
+están comprendidos entre 00 y 1F.
+
+Incluye caracteres de control como:
+- Tabuladores.
+- Saltos de línea.
+- Retornos de carro.
+
+\x7F
+Representa el carácter de control DEL.
+
+u
+Indica que la expresión regular trabaja en modo UTF-8.
+
+La cadena vacía '' indica que queremos eliminar
+los caracteres encontrados.
+
+El operador ?? '' establece una cadena vacía si
+preg_replace() devuelve null.
+
+Ejemplo:
+
+"Ana\nLópez" -> "AnaLópez"
+
+NOTA:
+Si preg_replace() encuentra UTF-8 no válido, puede
+devolver null y el nombre quedará vacío.
+*/
+
+$nombre = preg_replace(
+    '/[\x00-\x1F\x7F]/u',
+    '',
+    $nombre
+) ?? '';
+
+
+/*
+============================================================
+6. LIMITAR LA LONGITUD DEL NOMBRE
+============================================================
+
+substr() permite extraer una parte de una cadena.
+
+Su estructura es:
+
+substr(cadena, posicion_inicial, longitud);
+
+En nuestro caso:
+
+$nombre:
+Cadena sobre la que queremos trabajar.
+
+0:
+Comenzamos desde la primera posición.
+
+40:
+Extraemos como máximo 40 bytes.
+
+Ejemplo con caracteres ASCII:
+
+"Antonio" -> "Antonio"
+
+Si el nombre supera los 40 bytes, se recorta.
+
+IMPORTANTE:
+
+substr() trabaja con bytes, no con caracteres Unicode.
+
+Por tanto, en nombres con tildes, eñes u otros
+caracteres UTF-8, podría cortar un carácter a la mitad.
+
+Para limitar a 40 caracteres Unicode es preferible:
+
+mb_substr($nombre, 0, 40, 'UTF-8');
+
+Esta alternativa requiere la extensión mbstring.
+*/
+
+$nombre = substr($nombre, 0, 40);
+
+
+/*
+============================================================
+7. COMPROBAR SI EL VISITANTE HA INTRODUCIDO UN NOMBRE
+============================================================
+
+El operador !== realiza una comparación estricta
+de desigualdad.
+
+En este caso:
+
+$nombre !== ''
+
+Significa:
+
+"El nombre no es una cadena vacía".
+
+Si contiene algún carácter, guardamos la cookie.
+
+Si está vacío, eliminamos una posible cookie anterior.
+*/
+
+if ($nombre !== '') {
+
+    /*
+    --------------------------------------------------------
+    8. GUARDAR LA COOKIE DEL VISITANTE
+    --------------------------------------------------------
+
+    Enviamos al navegador una cookie llamada 'visitante'.
+
+    Su contenido será el nombre validado.
+
+    Utilizamos el mismo array $opciones que para
+    la cookie del tema.
+
+    Por tanto, tendrá la misma configuración
+    de duración, ruta y seguridad.
+    */
+
+    setcookie('visitante', $nombre, $opciones);
+
+} else {
+
+    /*
+    --------------------------------------------------------
+    9. BORRAR LA COOKIE SI EL NOMBRE ESTÁ VACÍO
+    --------------------------------------------------------
+
+    Imaginemos que el usuario había guardado
+    anteriormente el nombre "Ana".
+
+    Después vuelve al formulario, borra el nombre
+    y pulsa "Guardar preferencias".
+
+    No queremos conservar el nombre anterior.
+
+    Para solicitar la eliminación de una cookie,
+    enviamos otra con:
+
+    - El mismo nombre.
+    - La misma ruta y dominio.
+    - Una fecha de caducidad pasada.
+
+    time() devuelve el instante actual como
+    número de segundos desde la época Unix.
+
+    Restamos 3600 segundos (una hora).
+
+    De este modo, la cookie ya estará caducada.
+
+    Estamos modificando la clave 'expires'
+    del array asociativo $opciones.
+    */
+
+    $opciones['expires'] = time() - 3600;
+
+    /*
+    Enviamos la cookie 'visitante' con valor vacío
+    y una fecha de caducidad pasada.
+
+    Esto solicita al navegador que la elimine.
+
+    En el código original utilizabas $nombre
+    como segundo argumento.
+
+    Como en este bloque $nombre es '', ambas
+    instrucciones son equivalentes.
+
+    Utilizamos '' directamente para dejar más
+    clara nuestra intención de borrar la cookie.
+    */
+
+    setcookie('visitante', '', $opciones);
+}
+
+
+
+
+
+
+
 
 
         /*
@@ -623,6 +980,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         */
 
     }
+    volver('preferencias.php');
 
 }
 
@@ -679,7 +1037,8 @@ la cookie del visitante.
 Por tanto, siempre tendrá el valor ''.
 */
 
-$visitante = '';
+$visitante = $_COOKIE['visitante'] ?? '';
+$visitante = is_string($visitante) ? substr($visitante,0,40) : '';
 
 ?>
 
@@ -918,7 +1277,7 @@ Estas clases son propias de nuestro proyecto.
             id="visitante"
             name="visitante"
             maxlength="40"
-            value=""
+            value="<?= e($visitante) ?>"
             placeholder="Ej.: Ana"
         >
 

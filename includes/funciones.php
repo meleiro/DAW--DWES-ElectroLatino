@@ -59,7 +59,23 @@ function volver(string $pagina): never {
 
 // Al principio no existen preferencias persistentes.
 function temaActual(): string {
-    return 'claro';
+    
+        $tema = $_COOKIE['tema'] ?? 'claro';
+
+        if (
+
+            !is_string($tema) ||
+            !in_array($tema, ['claro', 'oscuro'], true)
+
+        ) {
+            return 'claro';
+        }
+
+        return $tema;
+
+
+
+
 }
 
 function cabecera(string $titulo): void {
